@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import fetcher from './Axios.config';
 
 const Form = () => {
     const [data, setData] = useState({});
@@ -27,8 +28,11 @@ const Form = () => {
         }
         setData(data);
 
+        const res = fetcher.post('/form', data);
 
     }
+
+
 
 
     return (
