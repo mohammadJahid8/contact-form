@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import Swal from 'sweetalert2';
 import fetcher from './Axios.config';
 
 const Form = () => {
@@ -6,8 +7,8 @@ const Form = () => {
     const [email, setEmail] = useState('');
     const [number, setNumber] = useState('');
     const [disable, setDisable] = useState(false);
-    // const emailRef = useRef();
-    // console.log(emailRef.current?.value);
+    const [code, setCode] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
 
 
     const handleEmailChange = (e) => {
@@ -22,11 +23,12 @@ const Form = () => {
     }
 
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const name = e.target.name.value;
         const email = e.target.email.value;
         const emailCode = e.target.emailCode.value;
+        setCode(emailCode);
         const number = e.target.number.value;
         const mobileCode = e.target.mobileCode.value;
         const subject = e.target.subject.value;
@@ -44,13 +46,42 @@ const Form = () => {
         }
         setData(data);
 
-        // const res = fetcher.post('/form', data);
+        //sending data to backend
+        try {
+            let res = await fetcher.post('/form', data)
+            let datas = res.data;
+            if (datas) {
+                Swal.fire({
+                    title: 'Success',
+                    text: 'Your message has been sent',
+                    icon: 'success',
+                    confirmButtonText: 'Ok'
+                })
+                setErrorMsg("");
+            }
+        } catch (error) {
+            console.log(error.response);
+            if (error.response) {
+                Swal.fire({
+                    title: 'Invalid OTP!!',
+                    text: 'Please enter a valid OTP',
+                    icon: 'error',
+                    confirmButtonText: 'Ok'
+                })
+                setErrorMsg(error.response.data.message);
 
+            }
+            return error.response;
+        }
     }
 
     const handleOTP = async () => {
-        const res = await fetcher.post('/form', data);
-        console.log(res, email);
+        const res = await fetcher.post('/form/emailOtp', { email });
+        Swal.fire(
+            'OTP SENT!',
+            'Please Check your email!',
+            'success'
+        )
     }
 
 
@@ -66,10 +97,15 @@ const Form = () => {
 
                     <div class="input-group mb-3">
                         <input type="text" name="emailCode" placeholder="Email Verification Code" class="input input-bordered w-full h-11" />
+                        <br />
+
                         <button type="button" class="text-white font-semibold w-24 bg-[#dc3545] border-none h-11" disabled={email === "" && !disable} onClick={handleOTP}>
                             Send OTP
                         </button>
                     </div>
+                    {
+                        errorMsg ? <p class="text-red-500 text-sm mb-2 ml-1">{errorMsg}</p> : ""
+                    }
 
                     <div class="input-group mb-3 h-11">
                         <select class="border-2">
